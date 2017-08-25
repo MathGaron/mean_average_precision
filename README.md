@@ -8,13 +8,12 @@ To learn about this metric I recommend this excellent blog post by Sancho McCann
 - Compute a running evaluation : input prediction/ground truth at each frames, no need to save in files
 - Plot per class pr-curves with average precision (matplotlib)
 
+![example](https://github.com/MathGaron/mean_average_precision/raw/master/image/pr-curve.png "pr-curves")
+An usage example can be found [Here](https://github.com/MathGaron/mean_average_precision/blob/master/mean_average_precision/example.py).
+
+
 ### TODO
 - Interpolated average precision
-
-![example](https://github.com/MathGaron/mean_average_precision/raw/master/image/pr-curve.png "pr-curves")
-
-
-An usage example can be found [Here](https://github.com/MathGaron/mean_average_precision/blob/master/mean_average_precision/example.py).
 
 ### Contribution
 And of course any bugfixes/contribution are welcomed!
