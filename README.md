@@ -9,7 +9,7 @@ Let the user compute a running mAP evaluation, which mean that it can be embedde
 
 The user can plot a PR-curve for each class with the per class average precision:
 
-![example](https://github.com/mathgaron/mean_average_precision/image/pr-curve.png "pr-curves")
+![example](https://github.com/MathGaron/mean_average_precision/raw/master/image/pr-curve.png "pr-curves")
 
 
 An usage example can be found in mean_average_precision/example.py
