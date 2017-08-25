@@ -3,6 +3,8 @@
 A simple utility tool to evaluate Bounding box classification task following Pascal VOC [paper](http://homepages.inf.ed.ac.uk/ckiw/postscript/ijcv_voc09.pdf).
 To learn about this metric I recommend this excellent blog post by Sancho McCann before reading the paper : [link](https://sanchom.wordpress.com/2011/09/01/precision-recall)
 
+All you need is your predicted bounding boxes with class and confidence score and the ground truth bounding boxes with their classes.
+
 ### features
 - Simple : numpy and matplotlib are the only dependencies
 - Compute a running evaluation : input prediction/ground truth at each frames, no need to save in files
