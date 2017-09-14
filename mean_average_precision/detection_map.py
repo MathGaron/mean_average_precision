@@ -106,6 +106,7 @@ class DetectionMAP:
         """
         grid = math.ceil(math.sqrt(self.n_class))
         fig, axes = plt.subplots(nrows=grid, ncols=grid)
+        mean_average_precision = []
         # TODO: data structure not optimal for this operation...
         for i, ax in enumerate(axes.flat):
             if i > self.n_class - 1:
@@ -116,6 +117,7 @@ class DetectionMAP:
                 precisions.append(acc[i].precision)
                 recalls.append(acc[i].recall)
             average_precision = self.compute_ap(i)
+            mean_average_precision.append(average_precision)
             ax.step(recalls, precisions, color='b', alpha=0.2,
                      where='post')
             ax.fill_between(recalls, precisions, step='post', alpha=0.2,
@@ -125,5 +127,6 @@ class DetectionMAP:
             ax.set_xlabel('Recall')
             ax.set_ylabel('Precision')
             ax.set_title('cls {0:} : AUC={1:0.2f}'.format(i, average_precision))
+        plt.suptitle("Mean average precision : {:0.2f}".format(sum(mean_average_precision)/len(mean_average_precision)))
         fig.tight_layout()
         plt.show()
