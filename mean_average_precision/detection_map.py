@@ -47,9 +47,10 @@ class DetectionMAP:
         gt_classes = gt_classes.astype(np.int)
         gt_size = gt_classes.shape[0]
         IoU = jaccard(pred_bb, gt_bb)
+
         # Remove IoU with low confidence
-        confidence_mask = pred_conf < threshold
-        IoU[confidence_mask, :] = 0
+        not_confident_mask = pred_conf < threshold
+        IoU[not_confident_mask, :] = 0
         # mask irrelevant overlaps
         IoU_mask = IoU >= overlap_threshold
 
@@ -80,6 +81,12 @@ class DetectionMAP:
         unclassified_mask = np.max(IoU, axis=0) < overlap_threshold
         for cls in gt_classes[unclassified_mask]:
             accumulators[cls].inc_not_predicted()
+
+        # Score prediction too far from GT
+        lonely_boundingbox = np.max(IoU, axis=1) < overlap_threshold
+        lonely_detection = np.bitwise_and(lonely_boundingbox, np.bitwise_not(not_confident_mask))
+        for cls in pred_classes[lonely_detection]:
+            accumulators[cls].inc_bad_prediction()
 
     def compute_ap(self, cls_idx):
         """
