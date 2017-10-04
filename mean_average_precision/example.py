@@ -130,8 +130,8 @@ gt_cls3 = np.array([2, 3, 5])
 if __name__ == '__main__':
     frames = []
     frames.append((pred_bb1, pred_cls1, pred_conf1, gt_bb1, gt_cls1))
-    #frames.append((pred_bb2, pred_cls2, pred_conf2, gt_bb2, gt_cls2))
-    #frames.append((pred_bb3, pred_cls3, pred_conf3, gt_bb3, gt_cls3))
+    frames.append((pred_bb2, pred_cls2, pred_conf2, gt_bb2, gt_cls2))
+    frames.append((pred_bb3, pred_cls3, pred_conf3, gt_bb3, gt_cls3))
 
     mAP = DetectionMAP(7)
     for frame in frames:
