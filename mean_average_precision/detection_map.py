@@ -1,6 +1,6 @@
 import numpy as np
-from ap_accumulator import APAccumulator
-from bbox_utils import jaccard
+from mean_average_precision.ap_accumulator import APAccumulator
+from mean_average_precision.bbox_utils import jaccard
 import math
 import matplotlib.pyplot as plt
 
@@ -38,19 +38,35 @@ class DetectionMAP:
         :param gt_classes: (np.array)   Ground Truth Classes :                          Shape [n_gt]
         :return:
         """
+
+        if pred_bb.ndim == 1:
+            pred_bb = np.repeat(pred_bb[:, np.newaxis], 4, axis=1)
         for accumulators, r in zip(self.total_accumulators, self.pr_scale):
             self.evaluate_(accumulators, pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, r, self.overlap_threshold)
 
     @staticmethod
-    def evaluate_(accumulators, pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, threshold, overlap_threshold=0.5):
+    def evaluate_(accumulators, pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, confidence_threshold, overlap_threshold=0.5):
         pred_classes = pred_classes.astype(np.int)
         gt_classes = gt_classes.astype(np.int)
         gt_size = gt_classes.shape[0]
-        IoU = jaccard(pred_bb, gt_bb)
+        if pred_bb.shape[0] != 0:
+            IoU = jaccard(pred_bb, gt_bb)
+            not_confident_mask = pred_conf < confidence_threshold
+            IoU[not_confident_mask, :] = 0
+            gt_match = np.max(IoU, axis=0)
+        else:
+            # If there is no prediction, we set all gt as not matched
+            gt_match = np.zeros(gt_size)
 
-        # Remove IoU with low confidence
-        not_confident_mask = pred_conf < threshold
-        IoU[not_confident_mask, :] = 0
+        # Score Gt with no prediction
+        unclassified_mask = gt_match < overlap_threshold
+        for cls in gt_classes[unclassified_mask]:
+            accumulators[cls].inc_not_predicted()
+
+        # If no prediction are made, no need to continue further
+        if len(pred_bb) == 0:
+            return
+
         # mask irrelevant overlaps
         IoU_mask = IoU >= overlap_threshold
 
@@ -77,12 +93,7 @@ class DetectionMAP:
             else:
                 accumulators[gt_cls].inc_bad_prediction()
 
-        # Score Gt with no prediction
-        unclassified_mask = np.max(IoU, axis=0) < overlap_threshold
-        for cls in gt_classes[unclassified_mask]:
-            accumulators[cls].inc_not_predicted()
-
-        # Score prediction too far from GT
+        # Bad prediction for bb too far from GT
         lonely_boundingbox = np.max(IoU, axis=1) < overlap_threshold
         lonely_detection = np.bitwise_and(lonely_boundingbox, np.bitwise_not(not_confident_mask))
         for cls in pred_classes[lonely_detection]:
