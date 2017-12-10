@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
 
-from mean_average_precision.ap_accumulator import APAccumulator
 from mean_average_precision.detection_map import DetectionMAP
 from mean_average_precision.utils.show_frame import show_frame
 
@@ -22,7 +21,7 @@ class TestNumpyFunctions(unittest.TestCase):
                             [0, 0, 0.1, 0.1]])
         self.gt_cls = np.array([0, 0, 1, 2])
 
-        #show_frame(self.pred, self.cls, self.conf, self.gt, self.gt_cls)
+        show_frame(self.pred, self.cls, self.conf, self.gt, self.gt_cls)
 
     def tearDown(self):
         pass
@@ -58,4 +57,13 @@ class TestNumpyFunctions(unittest.TestCase):
         self.assertEqual(qty, 0)
         qty = DetectionMAP.compute_true_positive(self.cls, self.gt_cls, IoU, 2)
         self.assertEqual(qty, 1)
+
+    def test_is_FP_incremented_properly_when_away_from_gt(self):
+        IoU = DetectionMAP.compute_IoU(self.pred, self.gt, self.conf, 0)
+        qty = DetectionMAP.compute_false_positive(self.cls, self.gt_cls, IoU, 0)
+        self.assertEqual(qty, 4)
+        qty = DetectionMAP.compute_false_positive(self.cls, self.gt_cls, IoU, 1)
+        self.assertEqual(qty, 1)
+        qty = DetectionMAP.compute_false_positive(self.cls, self.gt_cls, IoU, 2)
+        self.assertEqual(qty, 0)
 

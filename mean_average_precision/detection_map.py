@@ -58,11 +58,12 @@ class DetectionMAP:
     def evaluate_(accumulators, pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, confidence_threshold, overlap_threshold=0.5):
         pred_classes = pred_classes.astype(np.int)
         gt_classes = gt_classes.astype(np.int)
-        gt_size = gt_classes.shape[0]
         pred_size = pred_classes.shape[0]
         IoU = None
         if pred_size != 0:
             IoU = DetectionMAP.compute_IoU(pred_bb, gt_bb, pred_conf, confidence_threshold)
+            # mask irrelevant overlaps
+            IoU[IoU < overlap_threshold] = 0
 
         # Score Gt with no prediction
         for i, acc in enumerate(accumulators):
@@ -73,32 +74,12 @@ class DetectionMAP:
         if len(pred_bb) == 0:
             return
 
-        # mask irrelevant overlaps
-        IoU_mask = IoU >= overlap_threshold
-
-        # Gt with more than one overlap get False detections
-        pred_conf_grid = np.repeat(pred_conf[:, np.newaxis], gt_size, axis=1)
-        pred_conf_grid[np.bitwise_not(IoU_mask)] = 0
-        pred_max = np.max(pred_conf_grid, axis=0)
-        invalid = pred_conf_grid == 0
-        doubles = pred_conf_grid == pred_max[np.newaxis, :]
-        double_mask = np.bitwise_not(np.bitwise_or(invalid, doubles))
-        double_match = np.argwhere(double_mask)
-        for match in double_match:
-            gt_cls = gt_classes[match[1]]
-            accumulators[gt_cls].inc_bad_prediction()
-
         # Final match : 1 prediction per GT
         for i, acc in enumerate(accumulators):
             qty = DetectionMAP.compute_true_positive(pred_classes, gt_classes, IoU, i)
             acc.inc_good_prediction(qty)
-
-        # Bad prediction for bb too far from GT
-        lonely_boundingbox = np.max(IoU, axis=1) < overlap_threshold
-        not_confident_mask = pred_conf < confidence_threshold
-        lonely_detection = np.bitwise_and(lonely_boundingbox, np.bitwise_not(not_confident_mask))
-        for cls in pred_classes[lonely_detection]:
-            accumulators[cls].inc_bad_prediction()
+            qty = DetectionMAP.compute_false_positive(pred_classes, gt_classes, IoU, i)
+            acc.inc_bad_prediction(qty)
 
         print(accumulators[1])
 
@@ -131,6 +112,25 @@ class DetectionMAP:
         mask = IoU_mask[:, gt_cls == class_index]
         # sum all gt with prediction of this class
         return np.sum(mask.any(axis=0))
+
+    @staticmethod
+    def compute_false_positive(pred_cls, gt_cls, IoU, class_index):
+        IoU_mask = IoU != 0
+        prediction_masks = pred_cls == 0
+        IoU_mask[prediction_masks, :] = False
+        mask = IoU_mask[:, gt_cls == 0]
+        FP_predicted_by_other = np.sum(np.logical_not(mask.any(axis=0)))
+
+        IoU_mask = IoU != 0
+        prediction_masks = pred_cls != class_index
+        IoU_mask[prediction_masks, :] = False
+        gt_masks = gt_cls != class_index
+        IoU_mask[:, gt_masks] = False
+        mask = IoU_mask[pred_cls == class_index, :]
+        detection_per_gt = np.sum(mask, axis=0)
+        FP_double = np.sum(detection_per_gt[detection_per_gt > 1] - 1)
+        FP_predict_other = np.sum(np.logical_not(mask.any(axis=1)))
+        return FP_double + FP_predict_other + FP_predicted_by_other
 
     @staticmethod
     def multiple_prediction_on_gt(IoU_mask, gt_classes, accumulators):
