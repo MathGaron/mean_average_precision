@@ -89,14 +89,9 @@ class DetectionMAP:
             accumulators[gt_cls].inc_bad_prediction()
 
         # Final match : 1 prediction per GT
-        bb_match = np.argwhere(IoU_mask)  # Index [pred, gt]
-        for match in bb_match:
-            predicted_cls = pred_classes[match[0]]
-            gt_cls = gt_classes[match[1]]
-            if gt_cls == predicted_cls:
-                accumulators[gt_cls].inc_good_prediction()
-            else:
-                accumulators[gt_cls].inc_bad_prediction()
+        for i, acc in enumerate(accumulators):
+            qty = DetectionMAP.compute_true_positive(pred_classes, gt_classes, IoU, i)
+            acc.inc_good_prediction(qty)
 
         # Bad prediction for bb too far from GT
         lonely_boundingbox = np.max(IoU, axis=1) < overlap_threshold
@@ -127,15 +122,15 @@ class DetectionMAP:
         return np.sum(np.logical_not(mask.any(axis=0)))
 
     @staticmethod
-    def good_gt_prediction(IoU_mask, pred_classes, gt_classes, accumulators):
-        bb_match = np.argwhere(IoU_mask)  # Index [pred, gt]
-        for match in bb_match:
-            predicted_cls = pred_classes[match[0]]
-            gt_cls = gt_classes[match[1]]
-            if gt_cls == predicted_cls:
-                accumulators[gt_cls].inc_good_prediction()
-            else:
-                accumulators[gt_cls].inc_bad_prediction()
+    def compute_true_positive(pred_cls, gt_cls, IoU, class_index):
+        IoU_mask = IoU != 0
+        # check only the predictions from class index
+        prediction_masks = pred_cls != class_index
+        IoU_mask[prediction_masks, :] = False
+        # keep only gt of class index
+        mask = IoU_mask[:, gt_cls == class_index]
+        # sum all gt with prediction of this class
+        return np.sum(mask.any(axis=0))
 
     @staticmethod
     def multiple_prediction_on_gt(IoU_mask, gt_classes, accumulators):

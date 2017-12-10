@@ -50,23 +50,12 @@ class TestNumpyFunctions(unittest.TestCase):
         qty = DetectionMAP.compute_false_negatives(np.array([]), self.gt_cls, IoU, 2)
         self.assertEqual(qty, 1)
 
-    def test_FP_is_incremented_with_multiple_gt_detection(self):
-        accumulators = [APAccumulator(), APAccumulator()]
-        gt_classes = np.array([0, 1])
-        IoU = np.array([[0, 0.6], [0.5, 0.6], [1, 0.6]])
-        IoU_mask = IoU >= 0.5
-        DetectionMAP.multiple_prediction_on_gt(IoU_mask, gt_classes, accumulators)
-        self.assertEqual(accumulators[0].FP, 1)
-        self.assertEqual(accumulators[1].FP, 2)
-
-    def test_is_TP_incremented_if_prediction(self):
-        accumulators = [APAccumulator(), APAccumulator()]
-        gt_classes = np.array([0, 1])
-        pred_classes = np.array([0, 0, 0])
-        IoU = np.array([[0, 0.6], [0.5, 0.6], [1, 0.6]])
-        IoU_mask = IoU >= 0.5
-
-        DetectionMAP.good_gt_prediction(IoU_mask, pred_classes, gt_classes, accumulators)
-        for i in accumulators:
-            print(i)
+    def test_is_TP_incremented_properly(self):
+        IoU = DetectionMAP.compute_IoU(self.pred, self.gt, self.conf, 0)
+        qty = DetectionMAP.compute_true_positive(self.cls, self.gt_cls, IoU, 0)
+        self.assertEqual(qty, 1)
+        qty = DetectionMAP.compute_true_positive(self.cls, self.gt_cls, IoU, 1)
+        self.assertEqual(qty, 0)
+        qty = DetectionMAP.compute_true_positive(self.cls, self.gt_cls, IoU, 2)
+        self.assertEqual(qty, 1)
 

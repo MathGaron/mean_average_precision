@@ -137,7 +137,7 @@ if __name__ == '__main__':
     mAP = DetectionMAP(n_class)
     for i, frame in enumerate(frames):
         print("Evaluate frame {}".format(i))
-        show_frame(*frame)
+        #show_frame(*frame)
         mAP.evaluate(*frame)
 
     mAP.plot()
