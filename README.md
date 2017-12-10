@@ -1,6 +1,7 @@
 # Detection mAP
 
-A simple utility tool to evaluate Bounding box classification task following Pascal VOC [paper](http://homepages.inf.ed.ac.uk/ckiw/postscript/ijcv_voc09.pdf).
+A simple utility tool to evaluate Bounding box classification task following Pascal VOC [paper](http://homepages.inf.ed.ac.uk/ckiw/postscript/ijcv_voc09.pdf). Note that the method is not compared with the original VOC implementation! (See Todo)
+
 To learn about this metric I recommend this excellent blog post by Sancho McCann before reading the paper : [link](https://sanchom.wordpress.com/2011/09/01/precision-recall)
 
 
@@ -52,6 +53,7 @@ Note that the bounding boxes are represented as two corners points : [x1, y1, x2
 
 ### TODO
 - Interpolated average precision
+- Test against (VOC matlab implementation)[http://host.robots.ox.ac.uk/pascal/VOC/voc2012/htmldoc/devkit_doc.html]
 
 ### Contribution
 And of course any bugfixes/contribution are always welcome!
