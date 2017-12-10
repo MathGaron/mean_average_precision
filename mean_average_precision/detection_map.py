@@ -4,6 +4,8 @@ from mean_average_precision.bbox_utils import jaccard
 import math
 import matplotlib.pyplot as plt
 
+DEBUG = True
+
 
 class DetectionMAP:
     def __init__(self, n_class, pr_samples=11, overlap_threshold=0.5):
@@ -20,6 +22,12 @@ class DetectionMAP:
         self.reset_accumulators()
 
     def reset_accumulators(self):
+        """
+        Reset the accumulators state
+        TODO this is hard to follow... should use a better data structure
+        total_accumulators : list of list of accumulators at each pr_scale for each class
+        :return:
+        """
         self.total_accumulators = []
         for i in range(len(self.pr_scale)):
             class_accumulators = []
@@ -42,6 +50,8 @@ class DetectionMAP:
         if pred_bb.ndim == 1:
             pred_bb = np.repeat(pred_bb[:, np.newaxis], 4, axis=1)
         for accumulators, r in zip(self.total_accumulators, self.pr_scale):
+            if DEBUG:
+                print("Evaluate pr_scale {}".format(r))
             self.evaluate_(accumulators, pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, r, self.overlap_threshold)
 
     @staticmethod
@@ -50,9 +60,7 @@ class DetectionMAP:
         gt_classes = gt_classes.astype(np.int)
         gt_size = gt_classes.shape[0]
         if pred_bb.shape[0] != 0:
-            IoU = jaccard(pred_bb, gt_bb)
-            not_confident_mask = pred_conf < confidence_threshold
-            IoU[not_confident_mask, :] = 0
+            IoU = DetectionMAP.compute_IoU(pred_bb, gt_bb, pred_conf, confidence_threshold)
             gt_match = np.max(IoU, axis=0)
         else:
             # If there is no prediction, we set all gt as not matched
@@ -60,6 +68,8 @@ class DetectionMAP:
 
         # Score Gt with no prediction
         unclassified_mask = gt_match < overlap_threshold
+        print(gt_match)
+        print(unclassified_mask)
         for cls in gt_classes[unclassified_mask]:
             accumulators[cls].inc_not_predicted()
 
@@ -83,7 +93,6 @@ class DetectionMAP:
             accumulators[gt_cls].inc_bad_prediction()
 
         # Final match : 1 prediction per GT
-        IoU_mask = np.bitwise_and(np.bitwise_not(invalid), doubles)
         bb_match = np.argwhere(IoU_mask)  # Index [pred, gt]
         for match in bb_match:
             predicted_cls = pred_classes[match[0]]
@@ -95,9 +104,48 @@ class DetectionMAP:
 
         # Bad prediction for bb too far from GT
         lonely_boundingbox = np.max(IoU, axis=1) < overlap_threshold
+        not_confident_mask = pred_conf < confidence_threshold
         lonely_detection = np.bitwise_and(lonely_boundingbox, np.bitwise_not(not_confident_mask))
         for cls in pred_classes[lonely_detection]:
             accumulators[cls].inc_bad_prediction()
+
+        print(accumulators[1])
+
+    @staticmethod
+    def compute_IoU(prediction, gt, confidence, confidence_threshold):
+        IoU = jaccard(prediction, gt)
+        IoU[confidence < confidence_threshold, :] = 0
+        return IoU
+
+
+    @staticmethod
+    def good_gt_prediction(IoU_mask, pred_classes, gt_classes, accumulators):
+        bb_match = np.argwhere(IoU_mask)  # Index [pred, gt]
+        for match in bb_match:
+            predicted_cls = pred_classes[match[0]]
+            gt_cls = gt_classes[match[1]]
+            if gt_cls == predicted_cls:
+                accumulators[gt_cls].inc_good_prediction()
+            else:
+                accumulators[gt_cls].inc_bad_prediction()
+
+    @staticmethod
+    def multiple_prediction_on_gt(IoU_mask, gt_classes, accumulators):
+        """
+        Gt with more than one overlap get False detections
+        :param prediction_confidences:
+        :param IoU_mask: Mask of valid intersection over union  (np.array)      IoU Shape [n_pred, n_gt]
+        :param gt_classes:
+        :param accumulators:
+        :return: updated version of the IoU mask
+        """
+        # compute how many prediction per gt
+        pred_max = np.sum(IoU_mask, axis=0)
+        for i, gt_sum in enumerate(pred_max):
+            gt_cls = gt_classes[i]
+            if gt_sum > 1:
+                for j in range(gt_sum - 1):
+                    accumulators[gt_cls].inc_bad_prediction()
 
     def compute_ap(self, cls_idx):
         """

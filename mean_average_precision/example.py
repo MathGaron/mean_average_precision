@@ -1,7 +1,8 @@
 """
     Simple Usage example (with 3 images)
 """
-from detection_map import DetectionMAP
+from mean_average_precision.detection_map import DetectionMAP
+from mean_average_precision.utils.show_frame import show_frame
 import numpy as np
 
 pred_bb1 = np.array([[0.7580688, 0.39609185, 0.88696718, 0.55476958],
@@ -134,7 +135,9 @@ if __name__ == '__main__':
     n_class = 7
 
     mAP = DetectionMAP(n_class)
-    for frame in frames:
+    for i, frame in enumerate(frames):
+        print("Evaluate frame {}".format(i))
+        show_frame(*frame)
         mAP.evaluate(*frame)
 
     mAP.plot()
