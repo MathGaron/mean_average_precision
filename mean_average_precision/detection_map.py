@@ -59,19 +59,15 @@ class DetectionMAP:
         pred_classes = pred_classes.astype(np.int)
         gt_classes = gt_classes.astype(np.int)
         gt_size = gt_classes.shape[0]
-        if pred_bb.shape[0] != 0:
+        pred_size = pred_classes.shape[0]
+        IoU = None
+        if pred_size != 0:
             IoU = DetectionMAP.compute_IoU(pred_bb, gt_bb, pred_conf, confidence_threshold)
-            gt_match = np.max(IoU, axis=0)
-        else:
-            # If there is no prediction, we set all gt as not matched
-            gt_match = np.zeros(gt_size)
 
         # Score Gt with no prediction
-        unclassified_mask = gt_match < overlap_threshold
-        print(gt_match)
-        print(unclassified_mask)
-        for cls in gt_classes[unclassified_mask]:
-            accumulators[cls].inc_not_predicted()
+        for i, acc in enumerate(accumulators):
+            qty = DetectionMAP.compute_false_negatives(pred_classes, gt_classes, IoU, i)
+            acc.inc_not_predicted(qty)
 
         # If no prediction are made, no need to continue further
         if len(pred_bb) == 0:
@@ -117,6 +113,18 @@ class DetectionMAP:
         IoU[confidence < confidence_threshold, :] = 0
         return IoU
 
+    @staticmethod
+    def compute_false_negatives(pred_cls, gt_cls, IoU, class_index):
+        if len(pred_cls) == 0:
+            return np.sum(gt_cls == class_index)
+        IoU_mask = IoU != 0
+        # check only the predictions from class index
+        prediction_masks = pred_cls != class_index
+        IoU_mask[prediction_masks, :] = False
+        # keep only gt of class index
+        mask = IoU_mask[:, gt_cls == class_index]
+        # sum all gt with no prediction of its class
+        return np.sum(np.logical_not(mask.any(axis=0)))
 
     @staticmethod
     def good_gt_prediction(IoU_mask, pred_classes, gt_classes, accumulators):

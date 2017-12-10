@@ -48,7 +48,7 @@ def show_frame(pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, background=n
         rect_h = y2 - y1
         ax.add_patch(patches.Rectangle((x1, y1), rect_w, rect_h,
                                        fill=False,
-                                       edgecolor=cmap(float(pred_classes[i]) / n_class)))
+                                       edgecolor=cmap(float(gt_classes[i]) / n_class)))
 
     legend_handles = []
     for i in range(n_class):

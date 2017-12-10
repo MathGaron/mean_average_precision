@@ -8,14 +8,14 @@ class APAccumulator:
     def __init__(self):
         self.TP, self.FP, self.FN = 0, 0, 0
 
-    def inc_good_prediction(self):
-        self.TP += 1
+    def inc_good_prediction(self, value=1):
+        self.TP += value
 
-    def inc_bad_prediction(self):
-        self.FP += 1
+    def inc_bad_prediction(self, value=1):
+        self.FP += value
 
-    def inc_not_predicted(self):
-        self.FN += 1
+    def inc_not_predicted(self, value=1):
+        self.FN += value
 
     @property
     def precision(self):
