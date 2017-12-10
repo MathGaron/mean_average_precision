@@ -31,8 +31,6 @@ class APAccumulator:
     @property
     def recall(self):
         total_gt = self.TP + self.FN
-        if total_gt == 0:
-            return 1
         return self.TP / total_gt
 
     def __str__(self):

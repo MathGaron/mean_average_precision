@@ -21,7 +21,7 @@ class TestNumpyFunctions(unittest.TestCase):
                             [0, 0, 0.1, 0.1]])
         self.gt_cls = np.array([0, 0, 1, 2])
 
-        show_frame(self.pred, self.cls, self.conf, self.gt, self.gt_cls)
+        #show_frame(self.pred, self.cls, self.conf, self.gt, self.gt_cls)
 
     def tearDown(self):
         pass
@@ -60,10 +60,10 @@ class TestNumpyFunctions(unittest.TestCase):
 
     def test_is_FP_incremented_properly_when_away_from_gt(self):
         IoU = DetectionMAP.compute_IoU(self.pred, self.gt, self.conf, 0)
-        qty = DetectionMAP.compute_false_positive(self.cls, self.gt_cls, IoU, 0)
+        qty = DetectionMAP.compute_false_positive(self.cls, self.conf, 0, self.gt_cls, IoU, 0)
         self.assertEqual(qty, 4)
-        qty = DetectionMAP.compute_false_positive(self.cls, self.gt_cls, IoU, 1)
-        self.assertEqual(qty, 1)
-        qty = DetectionMAP.compute_false_positive(self.cls, self.gt_cls, IoU, 2)
+        qty = DetectionMAP.compute_false_positive(self.cls, self.conf, 0, self.gt_cls, IoU, 1)
+        self.assertEqual(qty, 2)
+        qty = DetectionMAP.compute_false_positive(self.cls, self.conf, 0, self.gt_cls, IoU, 2)
         self.assertEqual(qty, 0)
 

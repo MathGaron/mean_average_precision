@@ -4,7 +4,7 @@ from mean_average_precision.bbox_utils import jaccard
 import math
 import matplotlib.pyplot as plt
 
-DEBUG = True
+DEBUG = False
 
 
 class DetectionMAP:
@@ -78,10 +78,10 @@ class DetectionMAP:
         for i, acc in enumerate(accumulators):
             qty = DetectionMAP.compute_true_positive(pred_classes, gt_classes, IoU, i)
             acc.inc_good_prediction(qty)
-            qty = DetectionMAP.compute_false_positive(pred_classes, gt_classes, IoU, i)
+            qty = DetectionMAP.compute_false_positive(pred_classes, pred_conf, confidence_threshold, gt_classes, IoU, i)
             acc.inc_bad_prediction(qty)
-
-        print(accumulators[1])
+        if DEBUG:
+            print(accumulators[3])
 
     @staticmethod
     def compute_IoU(prediction, gt, confidence, confidence_threshold):
@@ -114,22 +114,27 @@ class DetectionMAP:
         return np.sum(mask.any(axis=0))
 
     @staticmethod
-    def compute_false_positive(pred_cls, gt_cls, IoU, class_index):
+    def compute_false_positive(pred_cls, pred_conf, conf_threshold, gt_cls, IoU, class_index):
+        # check if a prediction of other class on class_index gt
         IoU_mask = IoU != 0
-        prediction_masks = pred_cls == 0
+        prediction_masks = pred_cls == class_index
         IoU_mask[prediction_masks, :] = False
-        mask = IoU_mask[:, gt_cls == 0]
-        FP_predicted_by_other = np.sum(np.logical_not(mask.any(axis=0)))
+        mask = IoU_mask[:, gt_cls == class_index]
+        FP_predicted_by_other = np.sum(mask.any(axis=0))
 
         IoU_mask = IoU != 0
         prediction_masks = pred_cls != class_index
         IoU_mask[prediction_masks, :] = False
         gt_masks = gt_cls != class_index
         IoU_mask[:, gt_masks] = False
-        mask = IoU_mask[pred_cls == class_index, :]
-        detection_per_gt = np.sum(mask, axis=0)
+        # check if more than one prediction on class_index gt
+        mask_double = IoU_mask[pred_cls == class_index, :]
+        detection_per_gt = np.sum(mask_double, axis=0)
         FP_double = np.sum(detection_per_gt[detection_per_gt > 1] - 1)
-        FP_predict_other = np.sum(np.logical_not(mask.any(axis=1)))
+        # check if class_index prediction outside of class_index gt
+        # total prediction of class_index - prediction matched with class index gt
+        detection_per_prediction = np.logical_and(pred_conf >= conf_threshold, pred_cls == class_index)
+        FP_predict_other = np.sum(detection_per_prediction) - np.sum(detection_per_gt)
         return FP_double + FP_predict_other + FP_predicted_by_other
 
     @staticmethod
