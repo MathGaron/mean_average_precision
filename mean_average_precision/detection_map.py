@@ -178,7 +178,7 @@ class DetectionMAP:
         Plot all pr-curves for each classes
         :return:
         """
-        grid = math.ceil(math.sqrt(self.n_class))
+        grid = int(math.ceil(math.sqrt(self.n_class)))
         fig, axes = plt.subplots(nrows=grid, ncols=grid)
         mean_average_precision = []
         # TODO: data structure not optimal for this operation...
