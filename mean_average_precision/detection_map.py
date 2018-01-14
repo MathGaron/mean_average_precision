@@ -1,6 +1,6 @@
 import numpy as np
 from mean_average_precision.ap_accumulator import APAccumulator
-from mean_average_precision.bbox_utils import jaccard
+from mean_average_precision.utils.bbox import jaccard
 import math
 import matplotlib.pyplot as plt
 

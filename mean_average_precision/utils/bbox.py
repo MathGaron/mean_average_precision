@@ -6,7 +6,7 @@
 import numpy as np
 
 
-def intersect(box_a, box_b):
+def intersect_area(box_a, box_b):
     """
     Compute the area of intersection between two rectangular bounding box
     Bounding boxes use corner notation : [x1, y1, x2, y2]
@@ -39,7 +39,7 @@ def jaccard(box_a, box_b):
     Return:
         jaccard overlap: (np.array) Shape: [n_pred, n_gt]
     """
-    inter = intersect(box_a, box_b)
+    inter = intersect_area(box_a, box_b)
     area_a = ((box_a[:, 2] - box_a[:, 0]) * (box_a[:, 3] - box_a[:, 1]))
     area_b = ((box_b[:, 2] - box_b[:, 0]) * (box_b[:, 3] - box_b[:, 1]))
     area_a = area_a[:, np.newaxis]
