@@ -23,15 +23,17 @@ class APAccumulator:
         if total_predicted == 0:
             total_gt = self.TP + self.FN
             if total_gt == 0:
-                return 1
+                return 1.
             else:
-                return 0
-        return self.TP / total_predicted
+                return 0.
+        return float(self.TP) / total_predicted
 
     @property
     def recall(self):
         total_gt = self.TP + self.FN
-        return self.TP / total_gt
+        if total_gt == 0:
+            return 1.
+        return float(self.TP) / total_gt
 
     def __str__(self):
         str = ""
