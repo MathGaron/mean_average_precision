@@ -8,7 +8,7 @@ To learn about this metric I recommend this excellent blog post by Sancho McCann
 ## features
 - Simple : numpy and matplotlib are the only dependencies
 - Compute a running evaluation : input prediction/ground truth at each frames, no need to save in files
-- Plot per class pr-curves with average precision (matplotlib)
+- Plot (matplotlib) per class pr-curves with interpolated average precision (default) or average precision
 
 ## Method
 ### Multiclass mAP
