@@ -52,7 +52,7 @@ Note that the bounding boxes are represented as two corners points : [x1, y1, x2
 ![example](https://github.com/MathGaron/mean_average_precision/raw/master/image/pr-curve.png "pr-curves")
 
 ### TODO
-- Interpolated average precision
+- ~~Interpolated average precision~~
 - Test against [VOC matlab implementation](http://host.robots.ox.ac.uk/pascal/VOC/voc2012/htmldoc/devkit_doc.html)
 
 ### Contribution
