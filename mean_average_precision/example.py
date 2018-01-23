@@ -4,6 +4,7 @@
 from mean_average_precision.detection_map import DetectionMAP
 from mean_average_precision.utils.show_frame import show_frame
 import numpy as np
+import matplotlib.pyplot as plt
 
 pred_bb1 = np.array([[0.880688, 0.44609185, 0.95696718, 0.6476958],
                      [0.84020283, 0.45787981, 0.99351478, 0.64294884],
@@ -76,3 +77,5 @@ if __name__ == '__main__':
         mAP.evaluate(*frame)
 
     mAP.plot()
+    #plt.show()
+    plt.savefig("pr_curve_example.png")

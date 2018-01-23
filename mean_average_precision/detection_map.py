@@ -216,4 +216,3 @@ class DetectionMAP:
 
         plt.suptitle("Mean average precision : {:0.2f}".format(sum(mean_average_precision)/len(mean_average_precision)))
         fig.tight_layout()
-        plt.show()
