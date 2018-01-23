@@ -80,8 +80,8 @@ class DetectionMAP:
             acc.inc_good_prediction(qty)
             qty = DetectionMAP.compute_false_positive(pred_classes, pred_conf, confidence_threshold, gt_classes, IoU, i)
             acc.inc_bad_prediction(qty)
-        if DEBUG:
-            print(accumulators[3])
+            if DEBUG:
+                print(accumulators[i])
 
     @staticmethod
     def compute_IoU(prediction, gt, confidence, confidence_threshold):

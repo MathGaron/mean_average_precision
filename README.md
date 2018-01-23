@@ -39,6 +39,7 @@ All you need is your predicted bounding boxes with class and confidence score an
       mAP.evaluate(*frame)
 
   mAP.plot()
+  plt.show() # or plt.savefig(path)
 ```
 In this example a frame is a tuple containing:
 - Predicted bounding boxes :  numpy array [n, 4]
