@@ -173,9 +173,28 @@ class DetectionMAP:
             previous_recall = recall
         return average_precision
 
-    def plot(self):
+    def compute_precision_recall_(self, class_index, interpolated=True):
+        precisions = []
+        recalls = []
+        for acc in self.total_accumulators:
+            precisions.append(acc[class_index].precision)
+            recalls.append(acc[class_index].recall)
+
+        if interpolated:
+            interpolated_precision = []
+            for precision in precisions:
+                last_max = 0
+                if interpolated_precision:
+                    last_max = max(interpolated_precision)
+                interpolated_precision.append(max(precision, last_max))
+            precisions = interpolated_precision
+
+        return precisions, recalls
+
+    def plot(self, interpolated=True):
         """
         Plot all pr-curves for each classes
+        :param interpolated: will compute the interpolated curve
         :return:
         """
         grid = int(math.ceil(math.sqrt(self.n_class)))
@@ -185,11 +204,8 @@ class DetectionMAP:
         for i, ax in enumerate(axes.flat):
             if i > self.n_class - 1:
                 break
-            precisions = []
-            recalls = []
-            for acc in self.total_accumulators:
-                precisions.append(acc[i].precision)
-                recalls.append(acc[i].recall)
+            precisions, recalls = self.compute_precision_recall_(i, interpolated)
+
             average_precision = self.compute_ap(i)
             mean_average_precision.append(average_precision)
             ax.step(recalls, precisions, color='b', alpha=0.2,
