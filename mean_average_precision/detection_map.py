@@ -155,20 +155,15 @@ class DetectionMAP:
                 for j in range(gt_sum - 1):
                     accumulators[gt_cls].inc_bad_prediction()
 
-    def compute_ap(self, cls_idx):
+    def compute_ap(self, precisions, recalls):
         """
         Compute average precision of a particular classes (cls_idx)
         :param cls:
         :return:
         """
-        precisions = []
-        recalls = []
-        for iteration in self.total_accumulators[::-1]:
-            precisions.append(iteration[cls_idx].precision)
-            recalls.append(iteration[cls_idx].recall)
         previous_recall = 0
         average_precision = 0
-        for precision, recall in zip(precisions, recalls):
+        for precision, recall in zip(precisions[::-1], recalls[::-1]):
             average_precision += precision * (recall - previous_recall)
             previous_recall = recall
         return average_precision
@@ -188,7 +183,6 @@ class DetectionMAP:
                     last_max = max(interpolated_precision)
                 interpolated_precision.append(max(precision, last_max))
             precisions = interpolated_precision
-
         return precisions, recalls
 
     def plot_pr(self, ax, class_index, precisions, recalls, average_precision):
@@ -216,7 +210,7 @@ class DetectionMAP:
             if i > self.n_class - 1:
                 break
             precisions, recalls = self.compute_precision_recall_(i, interpolated)
-            average_precision = self.compute_ap(i)
+            average_precision = self.compute_ap(precisions, recalls)
             self.plot_pr(ax, i, precisions, recalls, average_precision)
             mean_average_precision.append(average_precision)
 
