@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
     Bounding box intersection over union calculation.
     Borrowed from pytorch SSD implementation : https://github.com/amdegroot/ssd.pytorch/blob/master/layers/box_utils.py

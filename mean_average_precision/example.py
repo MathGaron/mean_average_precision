@@ -77,5 +77,5 @@ if __name__ == '__main__':
         mAP.evaluate(*frame)
 
     mAP.plot()
-    #plt.show()
-    plt.savefig("pr_curve_example.png")
+    plt.show()
+    #plt.savefig("pr_curve_example.png")

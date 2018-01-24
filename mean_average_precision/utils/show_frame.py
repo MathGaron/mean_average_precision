@@ -33,6 +33,7 @@ def show_frame(pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, background=n
         y2 = pred_bb[i, 3] * h
         rect_w = x2 - x1
         rect_h = y2 - y1
+        print(x1, y1)
         ax.add_patch(patches.Rectangle((x1, y1), rect_w, rect_h,
                                        fill=False,
                                        edgecolor=cmap(float(pred_classes[i]) / n_class),
@@ -52,7 +53,7 @@ def show_frame(pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, background=n
 
     legend_handles = []
     for i in range(n_class):
-        legend_handles.append(patches.Patch(color=cmap(i / n_class), label="class : {}".format(i)))
+        legend_handles.append(patches.Patch(color=cmap(float(i) / n_class), label="class : {}".format(i)))
     ax.legend(handles=legend_handles)
     plt.show()
 
