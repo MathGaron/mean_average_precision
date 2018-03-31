@@ -46,4 +46,4 @@ def jaccard(box_a, box_b):
     area_a = area_a[:, np.newaxis]
     area_b = area_b[np.newaxis, :]
     union = area_a + area_b - inter
-    return inter / union
+    return inter.astype('float32') / union
