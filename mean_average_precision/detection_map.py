@@ -49,111 +49,52 @@ class DetectionMAP:
 
         if pred_bb.ndim == 1:
             pred_bb = np.repeat(pred_bb[:, np.newaxis], 4, axis=1)
+        IoUmask = None
+        if len(pred_bb) > 0:
+            IoUmask = self.compute_IoU_mask(pred_bb, gt_bb, self.overlap_threshold)
         for accumulators, r in zip(self.total_accumulators, self.pr_scale):
             if DEBUG:
                 print("Evaluate pr_scale {}".format(r))
-            self.evaluate_(accumulators, pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, r, self.overlap_threshold)
+            self.evaluate_(IoUmask, accumulators, pred_classes, pred_conf, gt_classes, r)
 
     @staticmethod
-    def evaluate_(accumulators, pred_bb, pred_classes, pred_conf, gt_bb, gt_classes, confidence_threshold, overlap_threshold=0.5):
+    def evaluate_(IoUmask, accumulators, pred_classes, pred_conf, gt_classes, confidence_threshold):
         pred_classes = pred_classes.astype(np.int)
         gt_classes = gt_classes.astype(np.int)
-        pred_size = pred_classes.shape[0]
-        IoU = None
-        if pred_size != 0:
-            IoU = DetectionMAP.compute_IoU(pred_bb, gt_bb, pred_conf, confidence_threshold)
-            # mask irrelevant overlaps
-            IoU[IoU < overlap_threshold] = 0
 
-        # Score Gt with no prediction
         for i, acc in enumerate(accumulators):
-            qty = DetectionMAP.compute_false_negatives(pred_classes, gt_classes, IoU, i)
-            acc.inc_not_predicted(qty)
+            gt_number = np.sum(gt_classes == i)
+            pred_mask = np.logical_and(pred_classes == i, pred_conf >= confidence_threshold)
+            pred_number = np.sum(pred_mask)
+            if pred_number == 0:
+                acc.inc_not_predicted(gt_number)
+                continue
 
-        # If no prediction are made, no need to continue further
-        if len(pred_bb) == 0:
-            return
+            IoU1 = IoUmask[pred_mask, :]
+            mask = IoU1[:, gt_classes == i]
 
-        # Final match : 1 prediction per GT
-        for i, acc in enumerate(accumulators):
-            qty = DetectionMAP.compute_true_positive(pred_classes, gt_classes, IoU, i)
-            acc.inc_good_prediction(qty)
-            qty = DetectionMAP.compute_false_positive(pred_classes, pred_conf, confidence_threshold, gt_classes, IoU, i)
-            acc.inc_bad_prediction(qty)
-            if DEBUG:
-                print(accumulators[i])
+            tp = DetectionMAP.compute_true_positive(mask)
+            fp = pred_number - tp
+            fn = gt_number - tp
+            acc.inc_good_prediction(tp)
+            acc.inc_not_predicted(fn)
+            acc.inc_bad_prediction(fp)
 
     @staticmethod
-    def compute_IoU(prediction, gt, confidence, confidence_threshold):
+    def compute_IoU_mask(prediction, gt, overlap_threshold):
         IoU = jaccard(prediction, gt)
-        IoU[confidence < confidence_threshold, :] = 0
-        return IoU
+        # for each prediction select gt with the largest IoU and ignore the others
+        for i in range(len(prediction)):
+            maxj = IoU[i, :].argmax()
+            IoU[i, :maxj] = 0
+            IoU[i, (maxj + 1):] = 0
+        # make a mask of all "matched" predictions vs gt
+        return IoU >= overlap_threshold
 
     @staticmethod
-    def compute_false_negatives(pred_cls, gt_cls, IoU, class_index):
-        if len(pred_cls) == 0:
-            return np.sum(gt_cls == class_index)
-        IoU_mask = IoU != 0
-        # check only the predictions from class index
-        prediction_masks = pred_cls != class_index
-        IoU_mask[prediction_masks, :] = False
-        # keep only gt of class index
-        mask = IoU_mask[:, gt_cls == class_index]
-        # sum all gt with no prediction of its class
-        return np.sum(np.logical_not(mask.any(axis=0)))
-
-    @staticmethod
-    def compute_true_positive(pred_cls, gt_cls, IoU, class_index):
-        IoU_mask = IoU != 0
-        # check only the predictions from class index
-        prediction_masks = pred_cls != class_index
-        IoU_mask[prediction_masks, :] = False
-        # keep only gt of class index
-        mask = IoU_mask[:, gt_cls == class_index]
-        # sum all gt with prediction of this class
+    def compute_true_positive(mask):
+        # sum all gt with prediction of its class
         return np.sum(mask.any(axis=0))
-
-    @staticmethod
-    def compute_false_positive(pred_cls, pred_conf, conf_threshold, gt_cls, IoU, class_index):
-        # check if a prediction of other class on class_index gt
-        IoU_mask = IoU != 0
-        prediction_masks = pred_cls == class_index
-        IoU_mask[prediction_masks, :] = False
-        mask = IoU_mask[:, gt_cls == class_index]
-        FP_predicted_by_other = np.sum(mask.any(axis=0))
-
-        IoU_mask = IoU != 0
-        prediction_masks = pred_cls != class_index
-        IoU_mask[prediction_masks, :] = False
-        gt_masks = gt_cls != class_index
-        IoU_mask[:, gt_masks] = False
-        # check if more than one prediction on class_index gt
-        mask_double = IoU_mask[pred_cls == class_index, :]
-        detection_per_gt = np.sum(mask_double, axis=0)
-        FP_double = np.sum(detection_per_gt[detection_per_gt > 1] - 1)
-        # check if class_index prediction outside of class_index gt
-        # total prediction of class_index - prediction matched with class index gt
-        detection_per_prediction = np.logical_and(pred_conf >= conf_threshold, pred_cls == class_index)
-        FP_predict_other = np.sum(detection_per_prediction) - np.sum(detection_per_gt)
-        return FP_double + FP_predict_other + FP_predicted_by_other
-
-    @staticmethod
-    def multiple_prediction_on_gt(IoU_mask, gt_classes, accumulators):
-        """
-        Gt with more than one overlap get False detections
-        :param prediction_confidences:
-        :param IoU_mask: Mask of valid intersection over union  (np.array)      IoU Shape [n_pred, n_gt]
-        :param gt_classes:
-        :param accumulators:
-        :return: updated version of the IoU mask
-        """
-        # compute how many prediction per gt
-        pred_max = np.sum(IoU_mask, axis=0)
-        for i, gt_sum in enumerate(pred_max):
-            gt_cls = gt_classes[i]
-            if gt_sum > 1:
-                for j in range(gt_sum - 1):
-                    accumulators[gt_cls].inc_bad_prediction()
 
     def compute_ap(self, precisions, recalls):
         """
