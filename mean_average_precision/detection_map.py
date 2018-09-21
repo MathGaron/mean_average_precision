@@ -132,9 +132,10 @@ class DetectionMAP:
         detection_per_gt = np.sum(mask_double, axis=0)
         FP_double = np.sum(detection_per_gt[detection_per_gt > 1] - 1)
         # check if class_index prediction outside of class_index gt
-        # total prediction of class_index - prediction matched with class index gt
-        detection_per_prediction = np.logical_and(pred_conf >= conf_threshold, pred_cls == class_index)
-        FP_predict_other = np.sum(detection_per_prediction) - np.sum(detection_per_gt)
+        valid_predictions = np.logical_and(pred_conf >= conf_threshold, pred_cls == class_index)
+        mask_double = IoU_mask[valid_predictions, :]
+        # sum all prediction with no gt of this class
+        FP_predict_other = np.sum(np.logical_not((mask_double.any(axis=1))))
         return FP_double + FP_predict_other + FP_predicted_by_other
 
     @staticmethod
