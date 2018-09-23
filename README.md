@@ -19,7 +19,6 @@ Handle every class as one against the others. (x against z)
 - False positive (FP):
     - Gt x classified as x more than once
     - Prediction x not overlapping any Gt x
-    - Prediction z overlapping Gt x
 - False negative (FN):
     - Gt x not predicted as x
 ### Example frame

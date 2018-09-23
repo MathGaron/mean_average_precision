@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 
 from mean_average_precision.detection_map import DetectionMAP
+from mean_average_precision.utils.bbox import jaccard
 from mean_average_precision.utils.show_frame import show_frame
 
 
@@ -27,43 +28,38 @@ class TestNumpyFunctions(unittest.TestCase):
         pass
 
     def test_is_iou_thresholded(self):
-        IoU = DetectionMAP.compute_IoU(self.pred, self.gt, self.conf, 0.8)
-        valid_IoU = np.argwhere(IoU > 0)
-        np.testing.assert_equal(valid_IoU, np.array([[0, 0], [3, 2], [5, 3]]))
+        IoU = DetectionMAP.compute_IoU_mask(self.pred, self.gt, 0.7)
+        valid_IoU = np.argwhere(IoU)
+        np.testing.assert_equal(valid_IoU, np.array([[0, 0], [1, 0], [3, 2], [5, 3]]))
 
     def test_is_FN_incremented_properly(self):
-        IoU = DetectionMAP.compute_IoU(self.pred, self.gt, self.conf, 0)
-        qty = DetectionMAP.compute_false_negatives(self.cls, self.gt_cls, IoU, 0)
-        self.assertEqual(qty, 1)
-        qty = DetectionMAP.compute_false_negatives(self.cls, self.gt_cls, IoU, 1)
-        self.assertEqual(qty, 1)
-        qty = DetectionMAP.compute_false_negatives(self.cls, self.gt_cls, IoU, 2)
-        self.assertEqual(qty, 0)
+        mAP = DetectionMAP(3)
+        mAP.evaluate(self.pred, self.cls, self.conf, self.gt, self.gt_cls)
+
+        self.assertEqual(mAP.total_accumulators[0][0].FN, 1)
+        self.assertEqual(mAP.total_accumulators[0][1].FN, 1)
+        self.assertEqual(mAP.total_accumulators[0][2].FN, 0)
 
     def test_is_FN_incremented_properly_if_no_prediction(self):
-        IoU = None
-        qty = DetectionMAP.compute_false_negatives(np.array([]), self.gt_cls, IoU, 0)
-        self.assertEqual(qty, 2)
-        qty = DetectionMAP.compute_false_negatives(np.array([]), self.gt_cls, IoU, 1)
-        self.assertEqual(qty, 1)
-        qty = DetectionMAP.compute_false_negatives(np.array([]), self.gt_cls, IoU, 2)
-        self.assertEqual(qty, 1)
+        mAP = DetectionMAP(3)
+        mAP.evaluate(np.array([]), np.array([]), np.array([]), self.gt, self.gt_cls)
+        self.assertEqual(mAP.total_accumulators[0][0].FN, 2)
+        self.assertEqual(mAP.total_accumulators[0][1].FN, 1)
+        self.assertEqual(mAP.total_accumulators[0][2].FN, 1)
 
     def test_is_TP_incremented_properly(self):
-        IoU = DetectionMAP.compute_IoU(self.pred, self.gt, self.conf, 0)
-        qty = DetectionMAP.compute_true_positive(self.cls, self.gt_cls, IoU, 0)
-        self.assertEqual(qty, 1)
-        qty = DetectionMAP.compute_true_positive(self.cls, self.gt_cls, IoU, 1)
-        self.assertEqual(qty, 0)
-        qty = DetectionMAP.compute_true_positive(self.cls, self.gt_cls, IoU, 2)
-        self.assertEqual(qty, 1)
+        mAP = DetectionMAP(3)
+        mAP.evaluate(self.pred, self.cls, self.conf, self.gt, self.gt_cls)
+
+        self.assertEqual(mAP.total_accumulators[0][0].TP, 1)
+        self.assertEqual(mAP.total_accumulators[0][1].TP, 0)
+        self.assertEqual(mAP.total_accumulators[0][2].TP, 1)
 
     def test_is_FP_incremented_properly_when_away_from_gt(self):
-        IoU = DetectionMAP.compute_IoU(self.pred, self.gt, self.conf, 0)
-        qty = DetectionMAP.compute_false_positive(self.cls, self.conf, 0, self.gt_cls, IoU, 0)
-        self.assertEqual(qty, 4)
-        qty = DetectionMAP.compute_false_positive(self.cls, self.conf, 0, self.gt_cls, IoU, 1)
-        self.assertEqual(qty, 2)
-        qty = DetectionMAP.compute_false_positive(self.cls, self.conf, 0, self.gt_cls, IoU, 2)
-        self.assertEqual(qty, 0)
+        mAP = DetectionMAP(3)
+        mAP.evaluate(self.pred, self.cls, self.conf, self.gt, self.gt_cls)
+
+        self.assertEqual(mAP.total_accumulators[0][0].FP, 3)
+        self.assertEqual(mAP.total_accumulators[0][1].FP, 1)
+        self.assertEqual(mAP.total_accumulators[0][2].FP, 0)
 
