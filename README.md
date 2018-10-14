@@ -17,7 +17,7 @@ Handle every class as one against the others. (x against z)
 - True positive (TP):
     - Gt x predicted as x
 - False positive (FP):
-    - Gt x classified as x more than once
+    - Prediction x if Gt x has already a TP prediction
     - Prediction x not overlapping any Gt x
 - False negative (FN):
     - Gt x not predicted as x
