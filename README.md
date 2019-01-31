@@ -45,8 +45,8 @@ In this example a frame is a tuple containing:
 - Predicted bounding boxes :  numpy array [n, 4]
 - Predicted classes:          numpy array [n]
 - Predicted confidences:      numpy array [n]
-- Ground truth bounding boxes:numpy array [n, 4]
-- Ground truth classes:       numpy array [n]
+- Ground truth bounding boxes:numpy array [m, 4]
+- Ground truth classes:       numpy array [m]
 
 Note that the bounding boxes are represented as two corners points : [x1, y1, x2, y2]
 
