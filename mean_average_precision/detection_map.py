@@ -126,7 +126,7 @@ class DetectionMAP:
             precisions = interpolated_precision
         return precisions, recalls
 
-    def plot_pr(self, ax, class_index, precisions, recalls, average_precision):
+    def plot_pr(self, ax, class_name, precisions, recalls, average_precision):
         ax.step(recalls, precisions, color='b', alpha=0.2,
                 where='post')
         ax.fill_between(recalls, precisions, step='post', alpha=0.2,
@@ -135,9 +135,9 @@ class DetectionMAP:
         ax.set_xlim([0.0, 1.0])
         ax.set_xlabel('Recall')
         ax.set_ylabel('Precision')
-        ax.set_title('cls {0:} : AUC={1:0.2f}'.format(class_index, average_precision))
+        ax.set_title('{0:} : AUC={1:0.2f}'.format(class_name, average_precision))
 
-    def plot(self, interpolated=True):
+    def plot(self, interpolated=True, class_names=None):
         """
         Plot all pr-curves for each classes
         :param interpolated: will compute the interpolated curve
@@ -152,7 +152,8 @@ class DetectionMAP:
                 break
             precisions, recalls = self.compute_precision_recall_(i, interpolated)
             average_precision = self.compute_ap(precisions, recalls)
-            self.plot_pr(ax, i, precisions, recalls, average_precision)
+            class_name = class_names[i] if class_names else "Class {}".format(i)
+            self.plot_pr(ax, class_name, precisions, recalls, average_precision)
             mean_average_precision.append(average_precision)
 
         plt.suptitle("Mean average precision : {:0.2f}".format(sum(mean_average_precision)/len(mean_average_precision)))
