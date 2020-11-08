@@ -167,11 +167,11 @@ class DetectionMAP:
 
         mean_average_precision = []
         # TODO: data structure not optimal for this operation...
-        for i in range (mAP.n_class):
-            if i > mAP.n_class - 1:
+        for i in range (self.n_class):
+            if i > self.n_class - 1:
                 break
-            precisions, recalls = mAP.compute_precision_recall_(i, interpolated)
-            average_precision = mAP.compute_ap(precisions, recalls)
+            precisions, recalls = self.compute_precision_recall_(i, interpolated)
+            average_precision = self.compute_ap(precisions, recalls)
             class_name = class_names[i] if class_names else "Class {}".format(i)
             mean_average_precision.append(average_precision)
 
