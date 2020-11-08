@@ -160,7 +160,7 @@ class DetectionMAP:
         fig.tight_layout()
         
     
-    def get_result(interpolated=True, class_names=None):
+    def get_result(self,interpolated=True, class_names=None):
         """
         return result. As result is calculated for a batch, it needs to be utilized for entire dataset.
         """
