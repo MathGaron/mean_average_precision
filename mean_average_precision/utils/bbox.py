@@ -23,7 +23,11 @@ def intersect_area(box_a, box_b):
     min_xy = np.maximum(resized_A[:, :, :2], resized_B[:, :, :2])
 
     diff_xy = (max_xy - min_xy)
-    inter = np.clip(diff_xy, a_min=0, a_max=np.max(diff_xy))
+    inter = np.maximum(diff_xy, 0)
+    inter_max = np.max(diff_xy)
+    if inter_max > 0:
+        inter = np.minimum(inter_max, inter)
+    
     return inter[:, :, 0] * inter[:, :, 1]
 
 
